@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000" # Expose FastAPI on port 8000
+    environment:
+      # These would typically be managed by Docker secrets or a .env file
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - app_network
+    depends_on:
+      - ttyd_pm
+      - ttyd_frontend
+      - ttyd_backend
+
+  # ttyd service for Project Manager (pm)
+  ttyd_pm:
+    image: ttyd/ttyd:latest
+    command: bash # Or the specific shell/command to expose
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # Add other project-specific environment variables here
+    ports:
+      - "7681:7681" # Map host port to container port
+    volumes:
+      - ./project_root:/app # Mount project directory if needed
+    networks:
+      - app_network
+
+  # ttyd service for Frontend (fed)
+  ttyd_frontend:
+    image: ttyd/ttyd:latest
+    command: bash
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # Add other frontend-specific environment variables here
+    ports:
+      - "7682:7681"
+    volumes:
+      - ./frontend_app:/app
+    networks:
+      - app_network
+
+  # ttyd service for Backend (bed)
+  ttyd_backend:
+    image: ttyd/ttyd:latest
+    command: bash
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # Add other backend-specific environment variables here
+    ports:
+      - "7683:7681"
+    volumes:
+      - ./backend_app:/app
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
